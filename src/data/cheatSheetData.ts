@@ -95,20 +95,30 @@ In GenAI inference, you can adjust parameters to alter the model's behavior:
 *   **Top-K:** The model restricts its selection to the top *K* most likely next tokens.
 *   **Max Tokens (Length):** Hard limit on the maximum number of tokens the model can generate in the response to prevent runaway costs or infinite loops.
 
-### 2.4 Agentic AI
+### 2.4 Agentic AI & Workflows
 
-Moving beyond zero-shot prompt-response, Agentic AI introduces autonomy.
+Moving beyond zero-shot prompt-response, Agentic AI introduces autonomy and multi-step complex reasoning workflows.
 
-*   **AI Agents:** LLMs equipped with access to external tools (APIs, databases, calculators). The LLM uses logic (often via ReAct patterns) to decide *which* tool to use, generate parameters for the tool, observe the response, and decide the next step.
-*   **Model Context Protocol (MCP):** An emerging open standard that allows developers to connect AI assistants to data sources (files, databases, APIs) without writing custom integrations for every single AI model.
+*   **AI Agents:** LLMs equipped with access to external tools (APIs, databases, calculators). The LLM uses a reasoning loop (like ReAct) to decide *which* tool to use, generate parameters for the tool, observe the response, and decide the next step.
+*   **Workflow Orchestration:** Managing the state and execution sequence of multi-agent systems. Agents can communicate in multi-agent patterns (e.g., supervisor-worker, peer-to-peer).
+*   **Memory Management:** Agents maintain short-term (session) and long-term (user preference) memory across conversations.
+*   **Model Context Protocol (MCP):** An emerging open standard that allows developers to connect AI assistants to data sources (files, databases, APIs) predictably without writing custom integrations for every single AI model.
 
 ### 2.5 GenAI Risks and Liabilities
 
-*   **Hallucinations:** When an LLM confidently generates false, fictional, or nonsensical information. (Mitigated largely by RAG).
-*   **Nondeterminism:** Asking the same model the exact same prompt twice will likely yield two differently phrased answers (unlike a SQL query).
+*   **Hallucinations:** When an LLM confidently generates false, fictional, or nonsensical information. (Mitigated largely by RAG and grounding).
+*   **Nondeterminism:** Asking the same model the exact same prompt twice will rarely yield two identical outputs (unlike a SQL query).
 *   **Toxicity & Bias:** Generating offensive or unfairly biased content due to biases present in the scraping of the public internet used for pre-training.
 *   **Intellectual Property (IP) Infringement:** Models outputting exact copies of copyrighted material they were trained on, or using styles of living artists.
-*   **Prompt Injection:** A security vulnerability where a user crafts a malicious input that overrides the developer's hidden system prompt instructions.
+*   **Prompt Injection / Hijacking:** A security vulnerability where a user crafts a malicious input that overrides the developer's hidden system prompt instructions.
+
+### 2.6 The AWS GenAI Ecosystem
+
+*   **Amazon Bedrock:** Unified API for top Foundation Models (Anthropic Claude, Meta Llama, Amazon Nova/Titan, AI21, Cohere, Mistral). Supports serverless inference.
+*   **Amazon Q:** Generative AI assistant tailored for developers (IDE) and business use cases (Enterprise Q&A).
+*   **SageMaker JumpStart:** Provides pre-trained, open-source models, giving you full control over the infrastructure.
+*   **Agent Builders:** Tools like Amazon Bedrock AgentCore, Kiro, and Strands Agents simplify building complex autonomous workflows with embedded Identity and Policy checks.
+*   **AWS Transform:** Service to modernize and refactor codebases using generative AI.
 `
   },
   {
@@ -124,6 +134,8 @@ Prompt Engineering is the most cost-effective way to guide Foundation Models.
 *   **Few-Shot:** Providing 1 to 5 examples of the desired input/output format within the prompt itself to "teach" the model the format before asking it to perform the task.
 *   **Chain-of-Thought (CoT):** Appending "Let's think step by step" to the prompt. This forces the LLM to output its intermediate reasoning, dramatically reducing math and logic errors.
 *   **Negative Prompting:** Explicitly telling the model what *not* to include (e.g., "Generate a summary. Do not include any bullet points."). Used frequently in image generation (e.g., "ugly, extra fingers, blurry").
+*   **Prompt Caching:** Technique used to store intermediate processing layers of large common prompts to save costs and reduce latency on subsequent calls.
+*   **Prompt Management:** AWS offers Bedrock Prompt Management to track template versions, environments, and rollbacks across teams.
 
 ### 3.2 Retrieval-Augmented Generation (RAG) Architecture
 
@@ -134,6 +146,7 @@ RAG is arguably the most important architectural pattern in enterprise GenAI. It
 2.  **Chunking:** Split the text into smaller overlapping chunks (e.g., 500 tokens).
 3.  **Embedding:** Pass each chunk through an Embedding Model (e.g., Amazon Titan Embeddings) to convert text to vectors.
 4.  **Vector Database:** Store the vectors in a specialized Database (e.g., Amazon OpenSearch, Aurora PostgreSQL with pgvector, Amazon Neptune).
+*   **Bedrock Knowledge Bases:** A fully managed RAG service on AWS that automates the ingestion, chunking, embedding, and vector storage pipelines.
 
 **The RAG Retrieval Pipeline:**
 1.  User submits a query ("What is our Q3 return policy?").
@@ -144,30 +157,30 @@ RAG is arguably the most important architectural pattern in enterprise GenAI. It
 
 ### 3.3 Model Customization Methods (Cost Trade-offs)
 
-From lowest cost to highest cost:
+From lowest cost/effort to highest cost/effort:
 
-1.  **Prompt Engineering / RAG:** Lowest cost, highest ROI. No changes to model weights.
-2.  **Instruction Fine-Tuning:** Teaching a base model to behave like a chatbot or follow a specific rigid formatting guideline (e.g., always output XML).
-3.  **Domain Adaptation (Transfer Learning):** Fine-tuning the model on a massive corpus of highly specialized industry text (e.g., millions of legal contracts or medical journals) so it learns the vocabulary of that domain.
-4.  **PEFT (Parameter-Efficient Fine-Tuning) / LoRA:** A fine-tuning technique that freezes the majority of the LLM's original weights and only trains a very small, lightweight "adapter" layer. Massive cost and compute savings compared to full fine-tuning.
-5.  **Continuous Pre-training / Pre-training from Scratch:** Millions of dollars. Requires massive GPU clusters (Amazon EC2 P4/P5 instances) and petabytes of data.
+1.  **Prompt Engineering / In-Context Learning:** Lowest cost, highest ROI. No changes to model weights.
+2.  **RAG:** Managed retrieval of external context. Slightly more complex architecture, but no model training required.
+3.  **Model Distillation:** Training a smaller, less expensive "student" model to mimic the outputs of a massive, expensive "teacher" model.
+4.  **Instruction Fine-Tuning:** Teaching a base model to behave like a chatbot or follow a specific rigid formatting guideline (e.g., always output XML).
+5.  **Domain Adaptation (Transfer Learning):** Fine-tuning the model on a massive corpus of highly specialized industry text (e.g., medical journals) so it learns domain vocabulary.
+6.  **PEFT / LoRA:** Fine-tuning technique that freezes the majority of original weights and trains a small "adapter." Massive compute savings.
+7.  **Continuous Pre-training / Pre-training from Scratch:** Millions of dollars. Requires massive GPU clusters (Amazon EC2 P4/P5).
 
-### 3.4 Multi-Modal Foundation Models
+### 3.4 Multi-Modal Foundation Models & Selection Criteria
 
-Modern models are no longer just text.
-*   **Modality:** The format of data (Text, Image, Audio, Video).
-*   **Vision Models (VLM):** An LLM that can receive an image as input alongside text and "understand" the image (e.g., Anthropic Claude 3 Sonnet).
-*   **TTS / STT:** Text-to-Speech and Speech-to-Text.
+*   **Modality:** The format of data (Text, Image, Audio, Video). Vision Models (VLM) can "understand" images alongside text.
+*   **Selection Criteria:** When choosing an FM, balance cost, latency, multi-lingual support, model size context window length, and ease of customization.
 
 ### 3.5 Evaluating LLM Performance
 
 Evaluating generative output is notoriously difficult because there is no single "correct" string.
 
-*   **ROUGE (Recall-Oriented Understudy for Gisting Evaluation):** Used primarily for evaluating **Summarization**. It measures the overlap of n-grams (phrases) between the machine-generated summary and a human-written reference summary.
-*   **BLEU (Bilingual Evaluation Understudy):** Used primarily for evaluating **Language Translation**. It evaluates how similar the machine translation is to professional human translations.
-*   **BERTScore:** Computes similarity using contextual embeddings rather than exact word matches. It recognizes that "huge" and "giant" mean the same thing, whereas ROUGE/BLEU might penalize the mismatch.
-*   **LLM-as-a-Judge:** Using a highly capable (and expensive) model like Claude 3 Opus to grade the outputs of a cheaper, smaller model based on a rubric.
-*   **Human-in-the-Loop (HITL):** Using human reviewers for ultimate ground-truth evaluation, specifically to evaluate "Helpfulness" and "Harmlessness."
+*   **ROUGE:** Used primarily for evaluating **Summarization**. Analyzes n-gram overlap.
+*   **BLEU:** Used primarily for evaluating **Language Translation**.
+*   **BERTScore:** Computes similarity using contextual embeddings rather than exact word matches.
+*   **LLM-as-a-Judge:** Using a highly capable model like Claude Opus to grade cheaper models based on a rubric.
+*   **Human-in-the-Loop (HITL) & RLHF:** Using human feedback to evaluate "Helpfulness" and align models. Bedrock Model Evaluation supports automated datasets and human-led workflows.
 `
   },
   {
@@ -179,38 +192,35 @@ Evaluating generative output is notoriously difficult because there is no single
 
 AWS defines Responsible AI across specific dimensions:
 
-*   **Fairness:** Models should treat all subgroups equitably. Avoid algorithmic bias leading to discriminatory outcomes (e.g., loan approvals denying specific demographics).
-*   **Explainability:** Also known as Interpretability. Understanding *why* an AI model made a specific prediction.
+*   **Fairness:** Models should treat all subgroups equitably. Avoid algorithmic bias leading to discriminatory outcomes.
+*   **Explainability (Interpretability):** Understanding *why* an AI model made a specific prediction.
     *   *Transparent Models:* Linear Regression, Decision Trees. Easy to explain.
-    *   *Black-box Models:* Deep Neural Networks, LLMs. Difficult to explain. Highly regulated industries often require explainable models.
+    *   *Black-box Models:* Deep Neural Networks, LLMs. Difficult to explain.
 *   **Robustness:** The model must maintain performance under stress, edge cases, and unexpected adversarial inputs.
-*   **Privacy & Security:** Ensuring training data is protected and that models do not leak Personally Identifiable Information (PII) during inferencing.
+*   **Privacy & Security:** Ensuring training data is protected and that models do not leak Personally Identifiable Information (PII).
 *   **Safety:** The model should not cause physical or psychological harm or recommend dangerous actions.
-*   **Transparency:** Providing stakeholders with information about the model's capabilities, limitations, and how to use it safely (via Model Cards).
+*   **Transparency:** Providing stakeholders with information about the model's capabilities, limitations, and how to use it safely.
+*   **Environmental Sustainability:** Selecting energy-efficient instances (e.g., AWS Inferentia or Trainium chips) to minimize carbon footprints and reducing unnecessary model pre-training.
 
-### 4.2 Bias in Machine Learning
+### 4.2 Bias, Variance, & Data Characteristics
 
-Bias represents an inaccuracy in the model's predictions, often favoring one outcome or demographic over another.
-
-*   **Historical Bias:** The training data reflects pre-existing human societal biases.
-*   **Representation Bias:** The training dataset does not accurately reflect the population the model will serve in the real world (e.g., an autonomous vehicle trained only in sunny weather crashing in snow).
-*   **Measurement Bias:** Errors introduced through faulty data collection tools or inherently flawed labeling processes.
+*   **Bias in ML:** Represents an inaccuracy, often favoring one outcome.
+    *   *Historical Bias:* The training data reflects pre-existing human societal biases.
+    *   *Representation Bias:* The training dataset lacks diversity and does not reflect the population.
+    *   *Measurement Bias:* Errors introduced through faulty data collection tools.
+*   **Bias vs. Variance Tradeoff:**
+    *   *High Bias (Underfitting):* Model too simple, misses patterns.
+    *   *High Variance (Overfitting):* Model too complex, memorizes noise.
+*   **Quality Data Constraints:** Training datasets must be inclusive, diverse, highly curated, and balanced to avoid disparities.
 
 ### 4.3 Tools for Responsible AI on AWS
 
-1.  **Amazon SageMaker Clarify:** This is the primary tool for Bias and Explainability.
-    *   Detects bias in the training dataset *before* training.
-    *   Detects bias in the model predictions *after* training.
-    *   Provides Feature Importance graphs (e.g., SHAP values) showing exactly which data column contributed most to a specific decision.
-2.  **Amazon Bedrock Guardrails:** A crucial security and safety feature for GenAI applications.
-    *   It sits between the user and the Foundation Model.
-    *   It can block User Inputs (Prompts) and Model Outputs (Responses).
-    *   **Content Filters:** Blocks hate, violence, sexual content.
-    *   **Denied Topics:** Blocks the model from discussing competitors or providing medical advice.
-    *   **PII Redaction:** Strips SSNs, emails, and phone numbers out of the model's generated response before the user sees it.
-    *   **Word Filters:** Custom lists of forbidden words (e.g., profanity, secret project code names).
-3.  **Amazon SageMaker Model Cards:** A central document (a "nutrition label" for the model) that details objective information about the model, its intended use cases, risk rating, performance metrics, and limitations to ensure governance transparency.
-4.  **Amazon Augmented AI (Amazon A2I):** Implements a Human-in-the-Loop workflow. If a model's confidence score drops below a specific threshold (e.g., a scanned document is blurry), A2I routes the task to a human worker to review and approve manually.
+1.  **Amazon SageMaker Clarify:** Primary tool for Bias and Explainability.
+    *   Detects bias in training datasets *before* training and in predictions *after* training.
+    *   Provides Feature Importance graphs (e.g., SHAP values).
+2.  **Amazon Bedrock Guardrails:** Security/safety feature for GenAI applications blocking harmful content, PII, and custom denied topics.
+3.  **Amazon SageMaker Model Cards:** A central document that acts as a "nutrition label" detailing objective information, risk rating, performance metrics, and data lineage for governance transparency.
+4.  **Amazon Augmented AI (Amazon A2I):** Implements a Human-in-the-Loop workflow when a model lacks confidence.
 `
   },
   {
@@ -222,27 +232,26 @@ Bias represents an inaccuracy in the model's predictions, often favoring one out
 
 AWS handles the "Security OF the Cloud," while the Customer handles "Security IN the Cloud."
 
-*   **AWS Responsibilities:** Securing the physical data centers, the hypervisors, and the underlying managed infrastructure compute instances powering services like Amazon Bedrock and SageMaker. For Bedrock, AWS guarantees that customer prompt data and fine-tuning data are kept completely isolated within the customer's VPC boundaries and are **never** used to train Amazon's base models or shared with third-party model providers (Anthropic, Meta).
-*   **Customer Responsibilities:** Configuring IAM permissions, selecting KMS keys to encrypt training data in S3 (Encryption at Rest) and securing data over TLS (Encryption in Transit), implementing Bedrock Guardrails, reviewing Model output for hallucinations, and ensuring regulatory compliance.
+*   **AWS Responsibilities:** Securing the physical data centers, the hypervisors, and the underlying managed infrastructure compute instances powering services like Amazon Bedrock. AWS guarantees that customer prompt data is completely isolated and **never** used to train base models or shared with third-party providers.
+*   **Customer Responsibilities:** Configuring IAM permissions, encryption in S3 (Encryption at Rest) and over TLS (Encryption in Transit), implementing Bedrock Guardrails, validating outputs, and ensuring regulatory compliance.
 
 ### 5.2 IAM and Network Security Strategies
 
-*   **Least Privilege:** Ensuring IAM users, roles, and ML instances have the absolute minimum permissions required. A SageMaker training job should only have read access to the specific S3 bucket holding its training data, nothing else.
-*   **AWS PrivateLink / VPC Endpoints:** By default, AWS service APIs communicate over the public internet. By configuring a VPC Endpoint (powered by PrivateLink), traffic between your VPC and Amazon Bedrock (or SageMaker) never leaves the Amazon backbone network, eliminating exposure to the public internet. *This is critical for enterprise security compliance.*
+*   **Least Privilege:** Ensuring IAM users, roles, and ML instances have the absolute minimum permissions required.
+*   **AgentCore Identity and Policy:** Specifically restricts the autonomous actions an AI Agent can take on behalf of a user.
+*   **AWS PrivateLink / VPC Endpoints:** By default, AWS service APIs communicate over the public internet. VPC Endpoints route traffic over the Amazon backbone network, eliminating public internet exposure.
 
 ### 5.3 Core Governance and Compliance Services
 
-The exam frequently tests your ability to match the right auditing/governance service to an enterprise requirement.
-
-*   **AWS CloudTrail:** Logs every single API call made within the AWS account. If you need to answer "Who invoked the Bedrock Model API at 2:00 PM?", use CloudTrail. It is the core service for security investigations and auditing.
-*   **AWS Config:** Continuously monitors and records the configuration state of your AWS resources. It evaluates whether your resources comply with internal guidelines.
-*   **AWS Audit Manager:** Continuously maps your AWS usage to specific compliance frameworks (like GDPR, HIPAA, SOC 2) and heavily automates the process of gathering evidence for external auditors.
-*   **AWS Artifact:** A self-service portal where customers can download on-demand AWS security and compliance reports (e.g., SOC reports, PCI reports) and sign Business Associate Addendums (BAAs).
-*   **Amazon Macie:** An ML-powered security service specifically designed to discover, classify, and protect sensitive data (such as Personally Identifiable Information - PII) living inside Amazon S3 buckets.
+*   **AWS CloudTrail:** Logs every single API call made within the AWS account (e.g., "Who invoked Bedrock at 2:00 PM?"). Core service for auditing.
+*   **AWS Config:** Continuously monitors and records the configuration state of your AWS resources against internal guidelines.
+*   **AWS Audit Manager:** Heavily automates the process of gathering evidence for external auditors mapping to specific compliance frameworks (GDPR, HIPAA).
+*   **AWS Artifact:** Portal where customers can download on-demand AWS security/compliance reports and sign Business Associate Addendums (BAAs).
+*   **Amazon Macie:** ML-powered service to discover, classify, and protect sensitive PII living inside Amazon S3 buckets.
+*   **Amazon Inspector:** Vulnerability management service that continually scans AWS workloads for software vulnerabilities.
+*   **AWS Trusted Advisor:** Provides real-time guidance to provision resources following AWS best practices (Cost Optimization, Security, Fault Tolerance).
 
 ### 5.4 Mapping Use-Cases to AWS AI Services (Crucial Cheat Sheet)
-
-If the exam asks you to perform a specific task without managing infrastructure, pick the correct high-level AI service:
 
 | Business Need / Use Case | AWS Service |
 | :--- | :--- |
@@ -255,17 +264,15 @@ If the exam asks you to perform a specific task without managing infrastructure,
 | Add image and video analysis (object/face detection, moderation) | **Amazon Rekognition** |
 | Build an enterprise search engine (RAG backend) over internal docs | **Amazon Kendra** |
 | Provide highly customized product or music recommendations | **Amazon Personalize** |
-| Unified API to access industry-leading Foundation Models (Anthropic, Meta) | **Amazon Bedrock** |
+| Unified API to access industry-leading Foundation Models | **Amazon Bedrock** |
 | IDE Coding Assistant & Enterprise Q&A conversational AI | **Amazon Q** |
-| End-to-end platform for building, training, and deploying custom models | **Amazon SageMaker** |
+| End-to-end platform for building, training, and deploying custom models | **Amazon SageMaker AI** |
 | No-code visual interface for business analysts to build ML models | **Amazon SageMaker Canvas** |
 
 ### 5.5 Anti-Patterns & Exam Distractors
 
-When taking the exam, watch out for these common traps:
-
-*   **"We need a recommendation engine..." -> Avoid building from scratch.** The correct answer is usually \`Amazon Personalize\`. Answers suggesting "Write a collaborative filtering matrix factorization algorithm using SageMaker notebooks" are technically possible but incorrect for a *Practitioner*. Use the managed service.
-*   **"We need high accuracy on traditional tabular data..." -> Avoid LLMs.** Generative AI and Foundation models are massive, slow, and expensive. If the task is predicting a number (regression) or categorizing a binary flag based on an Excel spreadsheet, standard Machine Learning algorithms (XGBoost, Random Forests) via \`SageMaker\` are significantly more appropriate and cost-effective than using an LLM.
+*   **"We need a recommendation engine..." -> Avoid building from scratch.** The correct answer is usually \`Amazon Personalize\`. Answers suggesting manual complex algorithms in SageMaker are usually distractors for the practitioner level.
+*   **"We need high accuracy on traditional tabular data..." -> Avoid LLMs.** Generative AI models are massive, slow, and expensive. Use standard Machine Learning algorithms (XGBoost, Random Forests) via \`SageMaker AI\` for tabular data or regression tasks.
 *   **"We need to protect PII in S3..." -> Use Macie, not Guardrails.** Bedrock Guardrails protects prompt text in real-time. Amazon Macie scans S3 buckets asynchronously for sensitive data.
 `
   }

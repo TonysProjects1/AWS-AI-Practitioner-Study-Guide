@@ -3,11 +3,12 @@ import { courseData, Topic } from './data/courseData';
 import { Quiz } from './components/Quiz';
 import { AITutor } from './components/AITutor';
 import { CheatSheet } from './components/CheatSheet';
-import { BookOpen, CheckCircle2, ChevronRight, Menu, MessageSquareText, Shield, Cloud, BrainCircuit, X, FileText } from 'lucide-react';
+import { Flashcards } from './components/Flashcards';
+import { BookOpen, CheckCircle2, ChevronRight, Menu, MessageSquareText, Shield, Cloud, BrainCircuit, X, FileText, Layers } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'course' | 'cheatsheet'>('course');
+  const [currentView, setCurrentView] = useState<'course' | 'cheatsheet' | 'flashcards'>('course');
   const [selectedTopicId, setSelectedTopicId] = useState<string>(courseData[0].topics[0].id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isTutorOpen, setIsTutorOpen] = useState(false);
@@ -91,6 +92,23 @@ export default function App() {
                     {currentView === 'cheatsheet' && <div className="h-2 w-2 rounded-full bg-[#FF9900]" />}
                   </div>
                 </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('flashcards');
+                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                  }}
+                  className={`w-full text-left py-3 border-b border-[#1A1A1A]/5 transition-all flex justify-between items-center group
+                    ${currentView === 'flashcards' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}
+                  `}
+                >
+                  <div className={`pr-4 flex items-center gap-2 ${currentView === 'flashcards' ? 'text-lg font-serif italic' : 'text-sm font-sans'}`}>
+                    <Layers className="w-4 h-4" />
+                    Flashcards
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {currentView === 'flashcards' && <div className="h-2 w-2 rounded-full bg-[#FF9900]" />}
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -154,6 +172,12 @@ export default function App() {
                   <span className="text-[#FF9900]">/</span>
                   <span>Cheat Sheet</span>
                 </>
+              ) : currentView === 'flashcards' ? (
+                <>
+                  <span className="opacity-60">Resources</span>
+                  <span className="text-[#FF9900]">/</span>
+                  <span>Flashcards</span>
+                </>
               ) : (
                 <>
                   <span className="opacity-60">{selectedDomainTitle}</span>
@@ -172,6 +196,8 @@ export default function App() {
 
         {currentView === 'cheatsheet' ? (
           <CheatSheet />
+        ) : currentView === 'flashcards' ? (
+          <Flashcards />
         ) : (
           <div className="max-w-4xl mx-auto px-8 py-16">
             {selectedTopic && (
